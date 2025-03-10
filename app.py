@@ -6,15 +6,27 @@ import logging
 import json
 from threading import Thread
 from queue import Queue
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('youtube_downloader')
 
 # Create downloads directory if it doesn't exist
-os.makedirs('downloads', exist_ok=True)
+DOWNLOADS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'downloads')
+os.makedirs(DOWNLOADS_DIR, exist_ok=True)
 
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
+
+# Update the FFmpeg paths
+ffmpeg_locations = [
+    '/usr/bin',  # Linux system path
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ffmpeg-master-latest-win64-gpl', 'bin'),
+    os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'ffmpeg-master-latest-win64-gpl', 'bin'),
+    r'C:\ffmpeg-master-latest-win64-gpl\bin',
+    ''
+]
 
 def get_video_info(url):
     """Get YouTube video information including available formats"""
@@ -354,35 +366,8 @@ def download_video(url, format_id=None, type='video', progress_queue=None):
         timestamp = int(time.time())
         filename = f"youtube_{timestamp}"
         
-        # Set FFmpeg paths
-        ffmpeg_locations = [
-            # Try current directory first
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ffmpeg-master-latest-win64-gpl', 'bin'),
-            # Try parent directory
-            os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'ffmpeg-master-latest-win64-gpl', 'bin'),
-            # Try absolute path
-            r'C:\ffmpeg-master-latest-win64-gpl\bin',
-            # Try system PATH
-            ''
-        ]
-        
-        ffmpeg_path = None
-        for location in ffmpeg_locations:
-            temp_path = os.path.join(location, 'ffmpeg.exe') if location else 'ffmpeg'
-            if location == '' or os.path.exists(temp_path):
-                ffmpeg_path = location
-                logger.info(f"Found FFmpeg at: {temp_path}")
-                break
-        
-        if not ffmpeg_path:
-            error_msg = (
-                "FFmpeg not found. Please ensure FFmpeg is installed in one of these locations:\n"
-                f"1. {ffmpeg_locations[0]}\n"
-                f"2. {ffmpeg_locations[1]}\n"
-                f"3. {ffmpeg_locations[2]}"
-            )
-            logger.error(error_msg)
-            return None, error_msg
+        # Update the output template to use DOWNLOADS_DIR
+        output_template = os.path.join(DOWNLOADS_DIR, f'{filename}.%(ext)s')
 
         def progress_hook(d):
             if d['status'] == 'downloading' and progress_queue:
@@ -409,8 +394,8 @@ def download_video(url, format_id=None, type='video', progress_queue=None):
             
         ydl_opts = {
             'format': format_id if format_id else 'bestvideo+bestaudio/best',
-            'outtmpl': os.path.join('downloads', f'{filename}.%(ext)s'),
-            'ffmpeg_location': ffmpeg_path,
+            'outtmpl': output_template,
+            'ffmpeg_location': None,  # Will be set below
             'progress_hooks': [progress_hook],
             'merge_output_format': 'mp4',
             'quiet': False,
@@ -429,6 +414,14 @@ def download_video(url, format_id=None, type='video', progress_queue=None):
                 'preferedformat': 'mp4',
             }]
         }
+
+        # Find FFmpeg
+        for location in ffmpeg_locations:
+            ffmpeg_path = os.path.join(location, 'ffmpeg') if location else 'ffmpeg'
+            if os.path.exists(ffmpeg_path) or location == '':
+                ydl_opts['ffmpeg_location'] = location
+                logger.info(f"Found FFmpeg at: {ffmpeg_path}")
+                break
 
         if type == 'audio':
             ydl_opts.update({
@@ -478,7 +471,7 @@ def download_video(url, format_id=None, type='video', progress_queue=None):
             
         # Find the downloaded file
         downloaded_file = None
-        for file in os.listdir('downloads'):
+        for file in os.listdir(DOWNLOADS_DIR):
             if file.startswith(os.path.basename(filename).split('.')[0]):
                 downloaded_file = file
                 break
@@ -487,7 +480,7 @@ def download_video(url, format_id=None, type='video', progress_queue=None):
             return None, "Download failed - file not found"
             
         # Verify file size
-        file_path = os.path.join('downloads', downloaded_file)
+        file_path = os.path.join(DOWNLOADS_DIR, downloaded_file)
         actual_size = os.path.getsize(file_path)
         actual_size_mb = actual_size / (1024 * 1024)
         
@@ -597,7 +590,7 @@ def download():
 def get_file(filename):
     try:
         filename = os.path.basename(filename)
-        filepath = os.path.join('downloads', filename)
+        filepath = os.path.join(DOWNLOADS_DIR, filename)
         
         if not os.path.exists(filepath):
             return jsonify({
@@ -623,4 +616,7 @@ def get_file(filename):
         }), 500
 
 if __name__ == '__main__':
-    app.run(debug=True) 
+    port = int(os.environ.get('PORT', 5000))
+    host = os.environ.get('HOST', '0.0.0.0')
+    debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    app.run(host=host, port=port, debug=debug) 
