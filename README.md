@@ -2,6 +2,8 @@
 
 A modern, user-friendly web application for downloading YouTube videos in various qualities, including 4K, HD, and audio-only formats. Built with Flask and yt-dlp, featuring a YouTube-inspired dark theme and real-time download progress tracking.
 
+[Add a screenshot of your application here]
+
 ## 🚀 Development Journey
 
 I created this project to solve the common need for a reliable YouTube video downloader with a modern interface. Here's how I built it:
@@ -70,7 +72,7 @@ Plus FFmpeg installation (see installation instructions below)
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/youtube-downloader.git
+git clone https://github.com/Arunkumar6522/youtube-downloader.git
 cd youtube-downloader
 ```
 
@@ -206,5 +208,75 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🆘 Support
 
-If you encounter any issues or have questions, please [open an issue](https://github.com/yourusername/youtube-downloader/issues).
+If you encounter any issues or have questions, please [open an issue](https://github.com/Arunkumar6522/youtube-downloader/issues).
+
+## 🔗 Connect with Me
+
+- GitHub: [Arunkumar6522](https://github.com/Arunkumar6522)
+- LinkedIn: [Add your LinkedIn profile URL]
+- Portfolio: [Add your portfolio website if you have one]
+
+## 📸 Screenshots
+
+### Home Page
+![Home Page](screenshots/home.png)
+
+### Video Information
+![Video Info](screenshots/video-info.png)
+
+### Download Progress
+![Download Progress](screenshots/download-progress.png)
+
+## 📝 How I Built This
+
+1. **Initial Setup**
+   - Created Flask application structure
+   - Set up virtual environment
+   - Installed necessary dependencies
+
+2. **Backend Development**
+   - Implemented YouTube video info extraction using yt-dlp
+   - Created routes for video info and download
+   - Added real-time progress tracking using SSE
+   - Implemented error handling and retry mechanisms
+
+3. **Frontend Development**
+   - Designed responsive UI with Bootstrap
+   - Created YouTube-inspired dark theme
+   - Implemented dynamic content loading
+   - Added progress modal with real-time updates
+
+4. **Features Implementation**
+   - Added multiple video quality options
+   - Implemented audio extraction
+   - Created download progress tracking
+   - Added file size and format information
+
+5. **Testing & Refinement**
+   - Tested with various YouTube videos
+   - Improved error handling
+   - Enhanced user feedback
+   - Optimized download process
+
+## 🔄 Recent Updates
+
+- Added centered modal for download progress
+- Improved error handling with clear messages
+- Enhanced mobile responsiveness
+- Added real-time download statistics
+- Implemented retry mechanism for failed downloads
+
+## 🤝 Want to Contribute?
+
+I welcome contributions! Here's how you can help:
+
+1. Report bugs and suggest features in the [issues section](https://github.com/Arunkumar6522/youtube-downloader/issues)
+2. Review source code changes
+3. Submit pull requests with improvements
+4. Add new features you think would be useful
+5. Help improve documentation
+
+## ⭐ Show Your Support
+
+If you find this project useful, please consider giving it a star on GitHub!
 
